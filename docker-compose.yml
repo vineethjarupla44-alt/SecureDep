@@ -1,0 +1,83 @@
+# ==============================================================================
+# AICTE FDR Management Portal (SecureDep - SIH 26265)
+# Full-Stack Docker Compose Orchestration (Database + Backend + Frontend)
+# ==============================================================================
+
+version: '3.8'
+
+services:
+  # 1. Relational Database (MySQL 8.0)
+  db:
+    image: mysql:8.0
+    container_name: securedep-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: fdr_management
+      MYSQL_USER: fdr_user
+      MYSQL_PASSWORD: fdr_secure_password_2026
+      MYSQL_ROOT_PASSWORD: root_secure_password_2026
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "fdr_user", "-pfdr_secure_password_2026"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - securedep-network
+
+  # 2. Flask REST API Backend (Python 3.11, Gunicorn, Tesseract OCR)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: securedep-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      FLASK_ENV: production
+      FLASK_APP: app.py
+      SECRET_KEY: aicte-sih-26265-fdr-jwt-secret-key-2026
+      JWT_SECRET_KEY: aicte-sih-26265-fdr-jwt-secret-key-2026
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: fdr_management
+      DB_USER: fdr_user
+      DB_PASSWORD: fdr_secure_password_2026
+      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000,http://localhost
+    ports:
+      - "5000:5000"
+    volumes:
+      - backend_uploads:/app/uploads
+    networks:
+      - securedep-network
+
+  # 3. React 18 + Vite Frontend (Nginx Reverse Proxy)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: securedep-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+    networks:
+      - securedep-network
+
+volumes:
+  db_data:
+    driver: local
+  backend_uploads:
+    driver: local
+
+networks:
+  securedep-network:
+    driver: bridge
+

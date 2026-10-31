@@ -1,0 +1,29 @@
+{
+  "name": "securedep-fullstack",
+  "version": "1.0.0",
+  "description": "AICTE Security Deposit / FDR Management Portal (SIH 26265)",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npm run dev:frontend",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "serve": "node frontend/serve.js",
+    "test": "node test_system_and_security.js",
+    "test:audit": "node test_system_and_security.js",
+    "test:frontend": "npm --prefix frontend test",
+    "docker:up": "docker compose up -d --build",
+    "docker:down": "docker compose down"
+  },
+  "keywords": [
+    "aicte",
+    "sih26265",
+    "fdr-management",
+    "security-deposit",
+    "flask",
+    "react",
+    "mysql"
+  ],
+  "author": "AICTE SIH 26265 Team",
+  "license": "UNLICENSED"
+}

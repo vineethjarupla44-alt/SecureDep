@@ -12,9 +12,9 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PORT = 3000;
-const BACKEND_HOST = '127.0.0.1';
-const BACKEND_PORT = 5000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+const BACKEND_HOST = process.env.BACKEND_HOST || '127.0.0.1';
+const BACKEND_PORT = process.env.BACKEND_PORT ? parseInt(process.env.BACKEND_PORT, 10) : 5000;
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',

@@ -13,7 +13,7 @@
     "document_count",
     "has_discrepancy"
   ],
-  "trained_at": "2026-10-30T19:56:16.880432",
+  "trained_at": "2026-10-31T03:43:42.887562",
   "evaluation_metrics": {
     "total_evaluated": 100,
     "flagged_anomalies": 5,
@@ -37,6 +37,6 @@
       "accuracy": 0.98
     }
   },
-  "saved_at": "2026-10-30T19:56:16.881462",
+  "saved_at": "2026-10-31T03:43:42.888654",
   "model_filename": "isolation_forest_v1.0.0.joblib"
 }

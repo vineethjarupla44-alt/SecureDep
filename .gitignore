@@ -57,3 +57,7 @@ yarn-error.log*
 .idea/
 .DS_Store
 Thumbs.db
+
+# Legacy Backward-Compatibility Junction
+fdr-management-portal
+fdr-management-portal/

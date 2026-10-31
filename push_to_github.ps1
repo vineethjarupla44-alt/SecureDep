@@ -17,6 +17,10 @@ try {
 }
 
 # 2. Clean nested .git in subfolder if present
+if (Test-Path -Path "backend\.git") {
+    Write-Host "[*] Removing nested subfolder .git in backend to track files in root repo..." -ForegroundColor Yellow
+    Remove-Item -Recurse -Force "backend\.git"
+}
 if (Test-Path -Path "fdr-management-portal\.git") {
     Write-Host "[*] Removing nested subfolder .git to track backend files in root repo..." -ForegroundColor Yellow
     Remove-Item -Recurse -Force "fdr-management-portal\.git"
@@ -51,7 +55,7 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host ""
     Write-Host "======================================================================" -ForegroundColor Green
     Write-Host " [SUCCESS] Full-stack project successfully pushed to GitHub!" -ForegroundColor Green
-    Write-Host " Verified: 'frontend', 'fdr-management-portal', tests, and docs are live." -ForegroundColor Green
+    Write-Host " Verified: 'frontend', 'backend', tests, and docs are live." -ForegroundColor Green
     Write-Host " Visit: https://github.com/vineethjarupla44-alt/SecureDep" -ForegroundColor Green
     Write-Host "======================================================================" -ForegroundColor Green
 } else {

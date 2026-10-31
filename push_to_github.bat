@@ -21,7 +21,12 @@ git --version
 
 echo.
 echo [*] Step 2: Preparing root Git repository...
-rem Remove nested git repository if created inside fdr-management-portal
+rem Remove nested git repository if created inside backend or fdr-management-portal
+if exist "backend\.git" (
+    echo [*] Removing nested subfolder .git to ensure entire backend is committed...
+    attrib -h -r -s "backend\.git\*.*" /s /d >nul 2>&1
+    rd /s /q "backend\.git" >nul 2>&1
+)
 if exist "fdr-management-portal\.git" (
     echo [*] Removing nested subfolder .git to ensure entire backend is committed...
     attrib -h -r -s "fdr-management-portal\.git\*.*" /s /d >nul 2>&1
@@ -58,7 +63,7 @@ if %ERRORLEVEL% EQU 0 (
     echo.
     echo ======================================================================
     echo [SUCCESS] Full-stack project successfully pushed to GitHub!
-    echo Verified: Both 'frontend' and 'fdr-management-portal' are now on GitHub.
+    echo Verified: Both 'frontend' and 'backend' are now on GitHub.
     echo Visit: https://github.com/vineethjarupla44-alt/SecureDep
     echo ======================================================================
 ) else (

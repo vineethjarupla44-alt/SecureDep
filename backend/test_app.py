@@ -54,7 +54,7 @@ from decimal import Decimal
 from pathlib import Path
 from PIL import Image
 
-# Ensure fdr-management-portal directory is on sys.path
+# Ensure backend directory is on sys.path
 PROJECT_DIR = Path(__file__).resolve().parent
 if str(PROJECT_DIR) not in sys.path:
     sys.path.insert(0, str(PROJECT_DIR))

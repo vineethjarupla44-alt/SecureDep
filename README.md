@@ -30,7 +30,7 @@ Technical institutions affiliated with the AICTE maintain Fixed Deposit Receipts
 ```
 SecureDep/
 │
-├── fdr-management-portal/         # Flask REST API Backend (Phases 1–8)
+├── backend/                       # Flask REST API Backend (Python 3.10+, SQLAlchemy, PyMySQL)
 │   ├── app.py                     # Application factory & CORS configuration
 │   ├── config.py                  # Environment config & security validation
 │   ├── init_db.py                 # Safe database & schema initialization
@@ -40,21 +40,23 @@ SecureDep/
 │   ├── services/                  # Business logic (FDR, OCR, Alerts, Audit, Release)
 │   ├── ml/                        # Scikit-Learn IsolationForest, Risk Engine, Model Registry
 │   ├── utils/                     # JWT decorators, validators, rate limiters
+│   ├── Dockerfile                 # Container image specification for backend
 │   └── test_app.py                # 50 Automated backend regression tests
 │
-├── frontend/                      # React 18 + Vite 5 + Tailwind CSS (Phase 9)
+├── frontend/                      # React 18 + Vite 5 + Tailwind CSS
 │   ├── src/
 │   │   ├── pages/                 # Role-based dashboards (Admin, Official, Institution)
 │   │   ├── components/            # Reusable UI, AI Radar Gauge, OCR Diff Modals
 │   │   ├── context/               # AuthContext with token refresh & persona switcher
 │   │   └── services/api.js        # Unified REST API client
 │   ├── preview.html               # Zero-setup standalone browser preview
-│   └── serve.js                   # Node.js production server with API reverse proxy
+│   ├── serve.js                   # Node.js production server with API reverse proxy
+│   └── Dockerfile                 # Container image specification for frontend
 │
-└── tests & scripts/
-    ├── test_registration_and_login.py  # 11-step institution registration & login suite
-    ├── test_live_workflow.js            # Live end-to-end HTTP verification script
-    └── test_system_and_security.js      # 113-test master cybersecurity & audit suite
+├── docker-compose.yml             # Single-command full-stack container orchestration
+├── test_system_and_security.js    # 113-test master cybersecurity & audit suite
+├── test_live_workflow.js          # Live end-to-end HTTP verification script
+└── package.json                   # Root orchestrator scripts (npm run dev, npm test)
 ```
 
 ---
@@ -64,7 +66,7 @@ SecureDep/
 ### 1. Prerequisites
 - **Python**: 3.10 or higher
 - **Node.js**: 18.0 or higher
-- **MySQL**: 8.0 or higher
+- **MySQL**: 8.0 or higher (or Docker Desktop)
 
 ---
 
@@ -72,7 +74,7 @@ SecureDep/
 
 ```bash
 # Navigate to backend directory
-cd fdr-management-portal
+cd backend
 
 # Create and activate virtual environment
 python -m venv .venv
@@ -117,6 +119,15 @@ npm run dev
 
 ---
 
+### 4. Docker Deployment (Optional - One Command)
+
+```bash
+# Start MySQL 8.0, Flask Backend, and React Frontend together:
+docker compose up -d --build
+```
+
+---
+
 ## 🔑 Demonstration & Evaluation Credentials
 
 The portal comes pre-seeded with baseline demonstration personas for rapid regulatory evaluation:
@@ -138,10 +149,10 @@ The project includes an exhaustive, multi-tier test suite:
 
 ```bash
 # 1. Run Complete Backend Regression Test Suite (50 Tests)
-python fdr-management-portal/test_app.py
+python backend/test_app.py
 
 # 2. Run Institution Registration & Approval Integration Suite (11 Tests)
-python fdr-management-portal/test_registration_and_login.py
+python backend/test_registration_and_login.py
 
 # 3. Run Master Cybersecurity & System Audit Suite (113 Checks - 100% Pass)
 node test_system_and_security.js

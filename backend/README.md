@@ -63,7 +63,7 @@ SecureDep/
 │           ├── AuditTrailPage.jsx       # Immutable audit logs & pre/post JSON state diffs
 │           └── NotFound.jsx             # 404 handler
 │
-└── fdr-management-portal/      # Flask Backend & Database (Phases 1-8)
+└── backend/                    # Flask Backend & Database (Phases 1-8)
     ├── app.py                  # Application factory, JWT config, CORS, route catalog
     ├── config.py               # Environment config (ports, CORS origins, secrets)
     ├── init_db.py              # Database verification script (12 tables)
@@ -341,7 +341,7 @@ ALL FRONTEND INTEGRATION & ARCHITECTURE TESTS PASSED SUCCESSFULLY.
 
 ### 3. Backend Regression Test Suite (55 Tests Passing)
 ```powershell
-cd "c:\Users\sonal\OneDrive\Desktop\SecureDep\fdr-management-portal"
+cd "c:\Users\sonal\OneDrive\Desktop\SecureDep\backend"
 python test_app.py
 ```
 **Expected Result:**

@@ -24,7 +24,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Paths
-const BACKEND_DIR = path.join(__dirname, 'fdr-management-portal');
+const BACKEND_DIR = fs.existsSync(path.join(__dirname, 'backend'))
+  ? path.join(__dirname, 'backend')
+  : path.join(__dirname, 'fdr-management-portal');
 const FRONTEND_DIR = path.join(__dirname, 'frontend');
 
 let totalTests = 0;
