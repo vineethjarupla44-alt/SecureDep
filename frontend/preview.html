@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AICTE Security Deposit &amp; FDR Management Portal | Government of India</title>
+  <!-- React & Babel Standalone for Zero-Install Browser Execution -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            aicte: {
+              dark: '#0B2545',
+              navy: '#134074',
+              blue: '#1D4E89',
+              light: '#EEF4F8',
+              teal: '#00A896',
+              mint: '#02C39A',
+              amber: '#F59E0B',
+              rose: '#EF4444',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .gov-pattern {
+      background-color: #0b2545;
+      background-image: radial-gradient(#134074 1.5px, transparent 1.5px), radial-gradient(#134074 1.5px, #0b2545 1.5px);
+      background-size: 60px 60px;
+      background-position: 0 0, 30px 30px;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased selection:bg-aicte-blue selection:text-white">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // --- Formatters ---
+    const formatCurrency = (amount) => {
+      if (amount === null || amount === undefined || isNaN(amount)) return '₹0.00';
+      return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(amount);
+    };
+
+    const formatDate = (dateStr) => {
+      if (!dateStr) return 'N/A';
+      try {
+        const d = new Date(dateStr);
+        return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      } catch (e) { return dateStr; }
+    };
+
+    // --- SVG Icon Component ---
+    const Icon = ({ name, className = 'w-5 h-5' }) => {
+      const paths = {
+        shield: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />,
+        dashboard: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />,
+        fileText: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />,
+        calendar: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />,
+        brain: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />,
+        history: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />,
+        upload: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />,
+        arrowRight: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />,
+        building: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />,
+        plus: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />,
+        alertTriangle: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />,
+        checkCircle: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />,
+        refreshCw: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />,
+      };
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          {paths[name] || paths.shield}
+        </svg>
+      );
+    };
+
+    // --- Badge Component ---
+    const Badge = ({ children, status }) => {
+      let colors = 'bg-slate-100 text-slate-700';
+      if (status === 'ACTIVE' || status === 'APPROVED' || status === 'VERIFIED') colors = 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+      else if (status === 'PENDING' || status === 'PENDING_SCRUTINY' || status === 'EXPIRING_SOON') colors = 'bg-amber-100 text-amber-800 border border-amber-200';
+      else if (status === 'MATURED' || status === 'OVERDUE' || status === 'REJECTED' || status === 'CONFIRMED_DUPLICATE') colors = 'bg-rose-100 text-rose-800 border border-rose-200';
+      else if (status === 'RELEASED') colors = 'bg-blue-100 text-blue-800 border border-blue-200';
+      return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold ${colors}`}>{children || status}</span>;
+    };
+
+    // --- Risk Radar Gauge ---
+    const RiskRadarGauge = ({ score = 24.5, category = 'LOW', ruleScore = 15.0, mlScore = 9.5 }) => {
+      const radius = 65;
+      const circumference = Math.PI * radius;
+      const strokeDashoffset = circumference - (score / 100) * circumference;
+      const color = score >= 80 ? '#EF4444' : score >= 60 ? '#F97316' : score >= 30 ? '#F59E0B' : '#10B981';
+
+      return (
+        <div className="flex flex-col items-center p-4 bg-white rounded-xl border border-slate-200">
+          <div className="relative flex items-center justify-center w-40 h-24">
+            <svg width="160" height="95" viewBox="0 0 160 95" className="overflow-visible">
+              <path d="M 15 85 A 65 65 0 0 1 145 85" fill="none" stroke="#E2E8F0" strokeWidth="12" strokeLinecap="round" />
+              <path d="M 15 85 A 65 65 0 0 1 145 85" fill="none" stroke={color} strokeWidth="12" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" />
+            </svg>
+            <div className="absolute bottom-1 flex flex-col items-center">
+              <span className="text-2xl font-black text-slate-900">{score.toFixed(1)}</span>
+              <span className="text-[9px] font-bold text-slate-400 uppercase">Score (0-100)</span>
+            </div>
+          </div>
+          <div className="mt-2"><Badge status={category}>{category} RISK</Badge></div>
+          <div className="w-full mt-3 pt-2 border-t border-slate-100 grid grid-cols-2 gap-2 text-center text-xs">
+            <div className="p-1.5 rounded bg-slate-50">
+              <span className="text-[9px] text-slate-400 font-bold block uppercase">Rule (70%)</span>
+              <span className="font-bold text-slate-800">{ruleScore.toFixed(1)}</span>
+            </div>
+            <div className="p-1.5 rounded bg-slate-50">
+              <span className="text-[9px] text-slate-400 font-bold block uppercase">ML (30%)</span>
+              <span className="font-bold text-slate-800">{mlScore.toFixed(1)}</span>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // --- Main Standalone App Shell ---
+    function App() {
+      const [role, setRole] = useState('administrator'); // 'administrator', 'aicte_official', 'institution_user'
+      const [activeTab, setActiveTab] = useState('dashboard');
+      const [fdrs, setFdrs] = useState([
+        { id: 1, fdr_number: 'FDR-SBI-2026-9001', institution: 'Delhi Institute of Technology', issuing_bank: 'State Bank of India', deposit_amount: 2500000.0, issue_date: '2026-01-15', maturity_date: '2031-01-15', status: 'ACTIVE' },
+        { id: 2, fdr_number: 'FDR-HDFC-2026-8002', institution: 'Mumbai Institute of Technology', issuing_bank: 'HDFC Bank', deposit_amount: 1500000.0, issue_date: '2026-02-01', maturity_date: '2031-02-01', status: 'ACTIVE' },
+        { id: 3, fdr_number: 'FDR-PNB-2021-4011', institution: 'Delhi Institute of Technology', issuing_bank: 'Punjab National Bank', deposit_amount: 3000000.0, issue_date: '2021-03-10', maturity_date: '2026-03-10', status: 'MATURED' },
+      ]);
+      const [isModalOpen, setIsModalOpen] = useState(false);
+      const [newFDR, setNewFDR] = useState({ fdr_number: '', issuing_bank: 'State Bank of India', deposit_amount: '', maturity_date: '2031-01-01' });
+
+      const handleAddFDR = (e) => {
+        e.preventDefault();
+        setFdrs([
+          ...fdrs,
+          {
+            id: fdrs.length + 1,
+            fdr_number: newFDR.fdr_number || `FDR-NEW-${Date.now().toString().slice(-4)}`,
+            institution: 'Delhi Institute of Technology',
+            issuing_bank: newFDR.issuing_bank,
+            deposit_amount: parseFloat(newFDR.deposit_amount) || 2000000.0,
+            issue_date: '2026-10-30',
+            maturity_date: newFDR.maturity_date,
+            status: 'ACTIVE'
+          }
+        ]);
+        setIsModalOpen(false);
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col bg-slate-50 font-sans">
+          {/* Top Government Bar */}
+          <div className="bg-aicte-dark text-white px-4 py-1.5 text-xs font-semibold flex items-center justify-between border-b border-aicte-navy">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>GOVERNMENT OF INDIA &bull; MINISTRY OF EDUCATION &bull; AICTE</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-emerald-400">Phase 9 Full-Stack Frontend</span>
+              <span>Helpdesk: 1800-AICTE-FDR</span>
+            </div>
+          </div>
+
+          {/* Main App Bar */}
+          <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shadow-xs sticky top-0 z-30">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-aicte-dark to-aicte-navy flex items-center justify-center text-white shadow-md">
+                <Icon name="shield" className="w-6 h-6 text-aicte-teal" />
+              </div>
+              <div>
+                <h1 className="text-base font-extrabold text-slate-900 leading-none">
+                  AICTE <span className="text-aicte-navy">FDR PORTAL</span>
+                </h1>
+                <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                  AI-Powered Security Deposit &amp; Compliance Portal
+                </p>
+              </div>
+            </div>
+
+            {/* Persona Switcher for Evaluation */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs">
+                <span className="text-slate-500 font-semibold">Active Persona:</span>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="bg-transparent font-bold text-aicte-navy focus:outline-none cursor-pointer"
+                >
+                  <option value="administrator">System Administrator</option>
+                  <option value="aicte_official">AICTE Official / Finance Desk</option>
+                  <option value="institution_user">Institution Finance Officer</option>
+                </select>
+              </div>
+
+              <div className="w-8 h-8 rounded-full bg-aicte-navy text-white flex items-center justify-center font-bold text-xs">
+                {role === 'administrator' ? 'A' : role === 'aicte_official' ? 'O' : 'I'}
+              </div>
+            </div>
+          </header>
+
+          <div className="flex-1 flex overflow-hidden">
+            {/* Sidebar */}
+            <aside className="w-64 bg-white border-r border-slate-200 p-4 space-y-6 hidden lg:block">
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Dashboards</span>
+                <div className="space-y-1 text-xs font-semibold">
+                  <button
+                    onClick={() => setActiveTab('dashboard')}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition ${activeTab === 'dashboard' ? 'bg-aicte-navy text-white font-bold' : 'text-slate-600 hover:bg-slate-100'}`}
+                  >
+                    <Icon name="dashboard" className="w-4 h-4" />
+                    <span>Executive Dashboard</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('fdr')}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition ${activeTab === 'fdr' ? 'bg-aicte-navy text-white font-bold' : 'text-slate-600 hover:bg-slate-100'}`}
+                  >
+                    <Icon name="fileText" className="w-4 h-4" />
+                    <span>FDR Instruments</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('ai')}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition ${activeTab === 'ai' ? 'bg-aicte-navy text-white font-bold' : 'text-slate-600 hover:bg-slate-100'}`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Icon name="brain" className="w-4 h-4 text-aicte-teal" />
+                      <span>AI Intelligence</span>
+                    </div>
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-teal-100 text-teal-800">Phase 8</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('maturity')}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition ${activeTab === 'maturity' ? 'bg-aicte-navy text-white font-bold' : 'text-slate-600 hover:bg-slate-100'}`}
+                  >
+                    <Icon name="calendar" className="w-4 h-4" />
+                    <span>Maturity &amp; Renewals</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('release')}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition ${activeTab === 'release' ? 'bg-aicte-navy text-white font-bold' : 'text-slate-600 hover:bg-slate-100'}`}
+                  >
+                    <Icon name="arrowRight" className="w-4 h-4" />
+                    <span>Release &amp; Refund</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('audit')}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl transition ${activeTab === 'audit' ? 'bg-aicte-navy text-white font-bold' : 'text-slate-600 hover:bg-slate-100'}`}
+                  >
+                    <Icon name="history" className="w-4 h-4" />
+                    <span>Audit Trail</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1">
+                <span className="text-[10px] text-slate-400 font-bold uppercase">Backend Integration</span>
+                <p className="font-bold text-slate-800">Connected to 127.0.0.1:5000</p>
+                <p className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  Phase 1–8 Relational Schema
+                </p>
+              </div>
+            </aside>
+
+            {/* Main Workspace Area */}
+            <main className="flex-1 p-6 max-w-7xl mx-auto space-y-6 overflow-y-auto">
+              {/* DASHBOARD TAB */}
+              {activeTab === 'dashboard' && (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-lg font-extrabold text-slate-900">
+                        {role === 'administrator' ? 'Central Administration Executive Dashboard' : role === 'aicte_official' ? 'Regulatory Scrutiny & Verification Desk' : 'Institution Security Deposit Portal'}
+                      </h2>
+                      <p className="text-xs text-slate-500">Real-time status across AICTE security deposit portfolio</p>
+                    </div>
+
+                    <button
+                      onClick={() => setIsModalOpen(true)}
+                      className="px-4 py-2 bg-aicte-navy text-white text-xs font-bold rounded-xl hover:bg-aicte-dark shadow-sm flex items-center gap-1.5"
+                    >
+                      <Icon name="plus" className="w-4 h-4 text-aicte-teal" />
+                      Register New FDR
+                    </button>
+                  </div>
+
+                  {/* 4 Metric Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                    <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs border-l-4 border-l-aicte-navy">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">Active FDR Capital</span>
+                      <h3 className="text-xl font-extrabold text-slate-900 mt-1">₹4.00 Crore</h3>
+                      <p className="text-[10px] text-slate-500 mt-0.5">2 Active Instruments</p>
+                    </div>
+
+                    <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs border-l-4 border-l-aicte-teal">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">Compliance Grade</span>
+                      <h3 className="text-xl font-extrabold text-emerald-700 mt-1">Grade A</h3>
+                      <p className="text-[10px] text-slate-500 mt-0.5">94.5 / 100 Index</p>
+                    </div>
+
+                    <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs border-l-4 border-l-amber-500">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">Expiring (30 Days)</span>
+                      <h3 className="text-xl font-extrabold text-slate-900 mt-1">1 Instrument</h3>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Renewal Notice Dispatched</p>
+                    </div>
+
+                    <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs border-l-4 border-l-rose-500">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">AI Duplicate Flags</span>
+                      <h3 className="text-xl font-extrabold text-slate-900 mt-1">0 Pending</h3>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Audited &amp; Clean</p>
+                    </div>
+                  </div>
+
+                  {/* FDR Instruments Table */}
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+                    <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                      <h3 className="text-xs font-bold text-slate-800">Security Deposit Fixed Deposit Receipts</h3>
+                      <span className="text-xs text-slate-500 font-semibold">{fdrs.length} Registered Instruments</span>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                          <tr>
+                            <th className="py-2.5 px-4">FDR Number</th>
+                            <th className="py-2.5 px-4">Institution</th>
+                            <th className="py-2.5 px-4">Scheduled Bank</th>
+                            <th className="py-2.5 px-4">Principal Amount</th>
+                            <th className="py-2.5 px-4">Maturity Date</th>
+                            <th className="py-2.5 px-4 text-center">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {fdrs.map((fdr) => (
+                            <tr key={fdr.id} className="hover:bg-slate-50">
+                              <td className="py-3 px-4 font-mono font-bold text-slate-800">{fdr.fdr_number}</td>
+                              <td className="py-3 px-4 font-semibold text-slate-700">{fdr.institution}</td>
+                              <td className="py-3 px-4 text-slate-600">{fdr.issuing_bank}</td>
+                              <td className="py-3 px-4 font-bold text-slate-900">{formatCurrency(fdr.deposit_amount)}</td>
+                              <td className="py-3 px-4 text-slate-600 font-medium">{formatDate(fdr.maturity_date)}</td>
+                              <td className="py-3 px-4 text-center"><Badge status={fdr.status} /></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* AI INTELLIGENCE TAB (Phase 8 Showcase) */}
+              {activeTab === 'ai' && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                      <Icon name="brain" className="w-5 h-5 text-aicte-teal" />
+                      Phase 8 AI &amp; Machine Learning Intelligence
+                    </h2>
+                    <p className="text-xs text-slate-500">Explainable Isolation Forest anomaly scoring, duplicate detection, and compliance profiling</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Gauge Card */}
+                    <div className="bg-white p-5 rounded-xl border border-slate-200 space-y-4">
+                      <h3 className="text-xs font-bold text-slate-800">Composite Risk Radar (0-100)</h3>
+                      <RiskRadarGauge score={24.5} category="LOW" ruleScore={15.0} mlScore={9.5} />
+                      <div className="p-3 rounded-lg bg-emerald-50 text-emerald-800 text-xs">
+                        <p className="font-bold">Compliant Status:</p>
+                        <p className="text-[11px] mt-0.5">Deposit parameters match standard AICTE benchmarks.</p>
+                      </div>
+                    </div>
+
+                    {/* AI Capabilities Card */}
+                    <div className="lg:col-span-2 bg-white p-5 rounded-xl border border-slate-200 space-y-4">
+                      <h3 className="text-xs font-bold text-slate-800">Phase 8 Machine Learning Engines</h3>
+                      <div className="grid grid-cols-2 gap-3 text-xs">
+                        <div className="p-3 rounded-xl border border-slate-200 bg-slate-50">
+                          <span className="font-bold text-slate-800 block">Levenshtein &amp; Token Cosine</span>
+                          <span className="text-[11px] text-slate-500 mt-1 block">Catches typographical errors and normalized alphanumeric duplicates.</span>
+                        </div>
+                        <div className="p-3 rounded-xl border border-slate-200 bg-slate-50">
+                          <span className="font-bold text-slate-800 block">Cryptographic SHA-256 Collision</span>
+                          <span className="text-[11px] text-slate-500 mt-1 block">Identifies identical document files attached across different FDR instruments.</span>
+                        </div>
+                        <div className="p-3 rounded-xl border border-slate-200 bg-slate-50">
+                          <span className="font-bold text-slate-800 block">Isolation Forest (100 Trees)</span>
+                          <span className="text-[11px] text-slate-500 mt-1 block">Unsupervised multi-dimensional outlier detection on 8 numerical features.</span>
+                        </div>
+                        <div className="p-3 rounded-xl border border-slate-200 bg-slate-50">
+                          <span className="font-bold text-slate-800 block">Predictive Compliance Index</span>
+                          <span className="text-[11px] text-slate-500 mt-1 block">Assigns statutory letter grades (A, B, C, D) based on penalty heuristics.</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* FDR INSTRUMENTS TAB */}
+              {activeTab === 'fdr' && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-bold text-slate-900">Security Deposit / FDR Instruments</h2>
+                    <button
+                      onClick={() => setIsModalOpen(true)}
+                      className="px-3 py-1.5 bg-aicte-navy text-white text-xs font-bold rounded-lg"
+                    >
+                      Register New FDR
+                    </button>
+                  </div>
+                  <div className="bg-white rounded-xl border border-slate-200 p-4">
+                    <p className="text-xs text-slate-500 mb-4">Showing all registered Fixed Deposit Receipts held in statutory lien:</p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-100 font-bold border-b border-slate-200">
+                          <tr>
+                            <th className="py-2 px-3">FDR Number</th>
+                            <th className="py-2 px-3">Bank</th>
+                            <th className="py-2 px-3">Amount</th>
+                            <th className="py-2 px-3">Maturity Date</th>
+                            <th className="py-2 px-3">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {fdrs.map((fdr) => (
+                            <tr key={fdr.id} className="hover:bg-slate-50">
+                              <td className="py-2.5 px-3 font-mono font-bold text-slate-800">{fdr.fdr_number}</td>
+                              <td className="py-2.5 px-3">{fdr.issuing_bank}</td>
+                              <td className="py-2.5 px-3 font-bold">{formatCurrency(fdr.deposit_amount)}</td>
+                              <td className="py-2.5 px-3">{formatDate(fdr.maturity_date)}</td>
+                              <td className="py-2.5 px-3"><Badge status={fdr.status} /></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* OTHER TABS PLACEHOLDERS */}
+              {['maturity', 'release', 'audit'].includes(activeTab) && (
+                <div className="bg-white p-8 rounded-xl border border-slate-200 text-center space-y-2">
+                  <h3 className="text-base font-bold text-slate-800 capitalize">{activeTab} Module Active</h3>
+                  <p className="text-xs text-slate-500 max-w-md mx-auto">
+                    Connected to Flask backend APIs (Phases 5-7). For the full component view with pagination and filters, launch the Vite dev server with <code>npm run dev</code>.
+                  </p>
+                </div>
+              )}
+            </main>
+          </div>
+
+          {/* New FDR Modal */}
+          {isModalOpen && (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+                <h3 className="text-base font-bold text-slate-900 mb-1">Submit Security Deposit FDR</h3>
+                <p className="text-xs text-slate-500 mb-4">Register new instrument under AICTE approval process</p>
+                <form onSubmit={handleAddFDR} className="space-y-3 text-xs">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">FDR Number</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. FDR-SBI-2026-9999"
+                      value={newFDR.fdr_number}
+                      onChange={(e) => setNewFDR({ ...newFDR, fdr_number: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Scheduled Bank</label>
+                    <select
+                      value={newFDR.issuing_bank}
+                      onChange={(e) => setNewFDR({ ...newFDR, issuing_bank: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300"
+                    >
+                      <option value="State Bank of India">State Bank of India</option>
+                      <option value="HDFC Bank">HDFC Bank</option>
+                      <option value="Punjab National Bank">Punjab National Bank</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Deposit Amount (₹)</label>
+                    <input
+                      type="number"
+                      required
+                      placeholder="e.g. 2500000"
+                      value={newFDR.deposit_amount}
+                      onChange={(e) => setNewFDR({ ...newFDR, deposit_amount: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 font-bold"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setIsModalOpen(false)}
+                      className="px-4 py-2 border border-slate-300 rounded-lg font-semibold text-slate-600"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-aicte-navy text-white rounded-lg font-bold shadow-xs hover:bg-aicte-dark"
+                    >
+                      Register FDR
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

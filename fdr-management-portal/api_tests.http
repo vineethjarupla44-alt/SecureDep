@@ -1,0 +1,473 @@
+### AICTE FDR Management Portal - API Requests (VS Code REST Client / Thunder Client)
+### Variable Definitions
+@baseUrl = http://127.0.0.1:5000/api
+@authToken = {{loginAdmin.response.body.access_token}}
+@instToken = {{loginInstUser.response.body.access_token}}
+
+###############################################################################
+# HEALTH CHECKS (Public)
+###############################################################################
+
+### 1. Service Health Check (Independent of Database)
+GET {{baseUrl}}/health
+Accept: application/json
+
+### 2. Database Connectivity Health Check
+GET {{baseUrl}}/health/db
+Accept: application/json
+
+###############################################################################
+# AUTHENTICATION & USER MANAGEMENT (Phase 4)
+###############################################################################
+
+### 3. Public User Registration (Institution User Only)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "finance@dit.edu.in",
+  "password": "StrongPassword2026!",
+  "full_name": "DIT Finance Desk",
+  "institution_id": 1
+}
+
+### 4. Public Registration Privilege Escalation Attempt (Blocked - Returns 403)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "hacker@evil.com",
+  "password": "HackerPassword123!",
+  "full_name": "Rogue Admin",
+  "institution_id": 1,
+  "role": "administrator"
+}
+
+### 5. Login as Administrator
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@aicte-india.org",
+  "password": "AdminSecure2026!"
+}
+
+### 6. Login as Institution User
+# @name loginInstUser
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "finance@dit.edu.in",
+  "password": "StrongPassword2026!"
+}
+
+### 7. Get Current Authenticated Profile
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 8. Attempt Profile Tampering on Role (Blocked - Returns 403)
+PATCH {{baseUrl}}/auth/me
+Authorization: Bearer {{instToken}}
+Content-Type: application/json
+
+{
+  "role": "administrator"
+}
+
+### 9. Admin Provisioning Privileged Role (AICTE Official)
+POST {{baseUrl}}/auth/admin/users
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "email": "inspector.north@aicte-india.org",
+  "password": "InspectorSecure123!",
+  "full_name": "North Region AICTE Inspector",
+  "role": "aicte_official"
+}
+
+### 10. User Logout (Revokes JWT via Database Blocklist)
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+###############################################################################
+# INSTITUTION MANAGEMENT (Phase 3 & 4)
+###############################################################################
+
+### 11. List Institutions (Isolated for Institution User; Global for Admin)
+GET {{baseUrl}}/institutions?page=1&per_page=10
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 12. Create an Institution (Admin/AICTE Only)
+POST {{baseUrl}}/institutions
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "institution_code": "1-1002938475",
+  "name": "Delhi College of Engineering and Technology",
+  "address": "Bawana Road, Shahbad Daulatpur, Delhi 110042",
+  "contact_email": "registrar@dcet.edu.in"
+}
+
+###############################################################################
+# FDR MANAGEMENT APIS (Protected & Isolated)
+###############################################################################
+
+### 13. Create FDR Record (Institution User submits for own institution)
+POST {{baseUrl}}/fdr
+Authorization: Bearer {{instToken}}
+Content-Type: application/json
+
+{
+  "fdr_number": "FDR-SBI-2026-9001",
+  "issuing_bank": "State Bank of India",
+  "deposit_amount": 2500000.00,
+  "issue_date": "2026-01-15",
+  "maturity_date": "2031-01-15",
+  "status": "ACTIVE"
+}
+
+### 14. Anonymous Access Attempt (Blocked - Returns 401)
+GET {{baseUrl}}/fdr
+Accept: application/json
+
+### 15. Retrieve FDR Records (Isolated to caller's institution)
+GET {{baseUrl}}/fdr?page=1&per_page=10
+Authorization: Bearer {{instToken}}
+Accept: application/json
+
+### 16. Search FDRs by Bank Name
+GET {{baseUrl}}/fdr/search?bank_name=State+Bank&page=1&per_page=10
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###############################################################################
+# SECURE DOCUMENT MANAGEMENT & OCR (Phase 5)
+###############################################################################
+
+### 17. List Documents for FDR Record #1
+GET {{baseUrl}}/fdr/1/documents
+Authorization: Bearer {{instToken}}
+Accept: application/json
+
+### 18. Retrieve Document Metadata & OCR Discrepancy Analysis Report
+GET {{baseUrl}}/documents/1
+Authorization: Bearer {{instToken}}
+Accept: application/json
+
+### 19. Download Document Stream
+GET {{baseUrl}}/documents/1/download
+Authorization: Bearer {{instToken}}
+
+### 20. Trigger/Re-run OCR Processing on Document #1
+POST {{baseUrl}}/documents/1/process-ocr
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 21. Reviewer Decision: Accept Document (AICTE/Admin Only)
+POST {{baseUrl}}/documents/1/review
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "decision": "ACCEPTED",
+  "notes": "Verified against physical bank confirmation certificate."
+}
+
+### 22. Reviewer Decision: Reject Document (AICTE/Admin Only)
+POST {{baseUrl}}/documents/1/review
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "decision": "REJECTED",
+  "notes": "Maturity date on FDR receipt does not match mandatory 5-year lock-in period."
+}
+
+###############################################################################
+# MATURITY TRACKING & MONITORING (Phase 6)
+###############################################################################
+
+### 23. Get Maturity Summary (Institution User - scoped to own institution)
+GET {{baseUrl}}/maturity/summary
+Authorization: Bearer {{instToken}}
+Accept: application/json
+
+### 24. Get Global Maturity Summary (Admin / AICTE Official)
+GET {{baseUrl}}/maturity/summary
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 25. List Expiring FDRs (Filtered by Category)
+GET {{baseUrl}}/maturity/expiring?category=EXPIRING_SOON&page=1&per_page=10
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 26. List Pending Renewal Actions
+GET {{baseUrl}}/maturity/pending-renewals?page=1&per_page=10
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 27. Trigger Background Alert Scan Job (Admin / AICTE Official Only)
+POST {{baseUrl}}/maturity/trigger-scan
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###############################################################################
+# IN-PORTAL NOTIFICATIONS & ALERTS (Phase 6)
+###############################################################################
+
+### 28. List Notifications & Alerts (Tenant Isolated)
+GET {{baseUrl}}/alerts?is_acknowledged=false&page=1&per_page=10
+Authorization: Bearer {{instToken}}
+Accept: application/json
+
+### 29. Acknowledge an Alert Notification
+POST {{baseUrl}}/alerts/1/acknowledge
+Authorization: Bearer {{instToken}}
+Accept: application/json
+
+###############################################################################
+# RENEWAL & REPLACEMENT WORKFLOW (Phase 6)
+###############################################################################
+
+### 30. Submit Renewal Proposal Linked to Predecessor FDR (Institution User)
+POST {{baseUrl}}/fdr/1/renew
+Authorization: Bearer {{instToken}}
+Content-Type: application/json
+
+{
+  "replacement_fdr_number": "FDR-SBI-2031-9002",
+  "issuing_bank": "State Bank of India",
+  "deposit_amount": 2500000.00,
+  "issue_date": "2031-01-15",
+  "maturity_date": "2036-01-15",
+  "submission_notes": "Submitted replacement FDR with full principal rollover for 5 additional years."
+}
+
+### 31. List Renewal Proposals (Tenant Isolated)
+GET {{baseUrl}}/renewals?status=PENDING_REVIEW&page=1&per_page=10
+Authorization: Bearer {{instToken}}
+Accept: application/json
+
+### 32. Get Renewal Proposal Details
+GET {{baseUrl}}/renewals/1
+Authorization: Bearer {{instToken}}
+Accept: application/json
+
+### 33. Approve Renewal Proposal (AICTE Official / Admin Only)
+POST {{baseUrl}}/renewals/1/review
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "decision": "APPROVED",
+  "notes": "Verified replacement deposit certificate with issuing bank scroll. Predecessor archived as RENEWED."
+}
+
+### 34. Reject Renewal Proposal (AICTE Official / Admin Only)
+POST {{baseUrl}}/renewals/1/review
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "decision": "REJECTED",
+  "notes": "Deposit receipt tenor is insufficient. AICTE requires a minimum 5-year lock-in period."
+}
+
+###############################################################################
+# RELEASE & REFUND WORKFLOW (Phase 7)
+###############################################################################
+
+### 35. Submit Release/Refund Request (Institution User)
+POST {{baseUrl}}/release-requests
+Authorization: Bearer {{instToken}}
+Content-Type: application/json
+
+{
+  "fdr_id": 1,
+  "request_type": "RELEASE",
+  "reason": "Institution has maintained academic approval and completed mandatory 5-year lock-in period.",
+  "bank_details": {
+    "account_name": "Delhi Institute of Technology Main A/C",
+    "bank_name": "State Bank of India",
+    "ifsc_code": "SBIN0001234",
+    "account_number": "112233445566"
+  }
+}
+
+### 36. List Release Requests (Tenant-Isolated)
+GET {{baseUrl}}/release-requests?page=1&per_page=10
+Authorization: Bearer {{instToken}}
+Accept: application/json
+
+### 37. Get Release Request Details (with full audit history)
+GET {{baseUrl}}/release-requests/1?include_audit=true
+Authorization: Bearer {{instToken}}
+Accept: application/json
+
+### 38. Update / Resubmit Release Request (Institution User)
+PATCH {{baseUrl}}/release-requests/1
+Authorization: Bearer {{instToken}}
+Content-Type: application/json
+
+{
+  "reason": "Updated justification with confirmed bank account details and council resolution.",
+  "resubmit": true
+}
+
+### 39. Official Scrutiny: Start Review (AICTE Official / Admin)
+POST {{baseUrl}}/release-requests/1/scrutiny
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "action": "START_REVIEW",
+  "remarks": "Official scrutiny initiated for compliance and lien verification."
+}
+
+### 40. Official Scrutiny: Request Correction (AICTE Official / Admin)
+POST {{baseUrl}}/release-requests/1/scrutiny
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "action": "REQUEST_CORRECTION",
+  "remarks": "Please provide copy of AICTE academic year affiliation letter."
+}
+
+### 41. Official Scrutiny: Recommend for Approval (AICTE Official / Admin)
+POST {{baseUrl}}/release-requests/1/scrutiny
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "action": "RECOMMEND_APPROVAL",
+  "remarks": "All documents verified in order. Recommended to Central Admin for final release approval."
+}
+
+### 42. Final Approval: Sanction Release (Admin Only - Self-Approval Blocked)
+POST {{baseUrl}}/release-requests/1/approval
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "decision": "APPROVE",
+  "remarks": "Sanction granted for release of security deposit under Section 10(1) regulations."
+}
+
+### 43. Final Closure & Settlement (AICTE Official / Admin)
+POST {{baseUrl}}/release-requests/1/close
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "closure_reference": "AICTE-SANCTION-2026-9081",
+  "remarks": "Release confirmed and FDR instrument marked RELEASED. Physical bank transaction proceeds via finance division."
+}
+
+### 44. Trigger Overdue Release Scan (AICTE Official / Admin)
+POST {{baseUrl}}/release-requests/trigger-overdue-scan
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "overdue_days": 7
+}
+
+###############################################################################
+# ADVANCED AUDIT TRAIL (Phase 7)
+###############################################################################
+
+### 45. Query Advanced Audit Logs (Tenant Isolated for Inst User; Global for Admin)
+GET {{baseUrl}}/audit-logs?page=1&per_page=20
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 46. Query Audit Logs Filtered by Entity & Action
+GET {{baseUrl}}/audit-logs?entity_type=RELEASE_REQUEST&page=1&per_page=20
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###############################################################################
+# ADVANCED AI & MACHINE LEARNING INTELLIGENCE (Phase 8)
+###############################################################################
+
+### 47. Trigger Full Duplicate FDR Scan (AICTE Official / Admin)
+POST {{baseUrl}}/ai/duplicates/scan
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 48. List Flagged Duplicate Candidates (Tenant Isolated)
+GET {{baseUrl}}/ai/duplicates?page=1&per_page=20
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 49. Retrieve Duplicate Candidate Details
+GET {{baseUrl}}/ai/duplicates/1
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 50. Review Duplicate Candidate Status (AICTE Official / Admin)
+PATCH {{baseUrl}}/ai/duplicates/1
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "status": "CONFIRMED_DUPLICATE",
+  "remarks": "Cross-institution verification completed with bank branch manager. Identified duplicate submission."
+}
+
+### 51. Single FDR Anomaly Analysis (Isolation Forest + Statistical Attribution)
+GET {{baseUrl}}/ai/anomalies/1
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 52. Compute Explainable Multi-Factor Risk Score (0-100)
+GET {{baseUrl}}/ai/risk-score/1
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 53. Batch Risk Evaluation Across Portfolio (AICTE Official / Admin)
+POST {{baseUrl}}/ai/risk-score/batch
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "fdr_ids": [1, 2]
+}
+
+### 54. Institution Compliance Profile & Regulatory Grade (Tenant Isolated)
+GET {{baseUrl}}/ai/compliance/1
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 55. Global Institutional Compliance Summary & Distribution (Official / Admin)
+GET {{baseUrl}}/ai/compliance/summary
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 56. 360-Degree Comprehensive AI Intelligence Dossier Report
+GET {{baseUrl}}/ai/report/1
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 57. AI Engine Health, Model Registry & Version Status
+GET {{baseUrl}}/ai/models/health
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 58. Retrain Baseline Isolation Forest on Synthetic Benchmark (Admin Only)
+POST {{baseUrl}}/ai/models/train
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "n_samples": 500
+}

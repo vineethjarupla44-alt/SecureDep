@@ -1,0 +1,42 @@
+{
+  "model_version": "v1.0.0",
+  "algorithm": "IsolationForest",
+  "contamination": 0.05,
+  "n_samples_trained": 100,
+  "feature_names": [
+    "log_deposit_amount",
+    "tenor_days",
+    "days_to_maturity",
+    "renewal_count",
+    "ocr_confidence",
+    "discrepancy_count",
+    "document_count",
+    "has_discrepancy"
+  ],
+  "trained_at": "2026-10-30T19:56:16.880432",
+  "evaluation_metrics": {
+    "total_evaluated": 100,
+    "flagged_anomalies": 5,
+    "normal_samples": 95,
+    "anomaly_rate_pct": 5.0,
+    "score_distribution": {
+      "min": 0.2805,
+      "max": 0.6067,
+      "mean": 0.3685,
+      "median": 0.3464,
+      "std": 0.0665
+    },
+    "benchmark_validation": {
+      "true_positives": 4,
+      "false_positives": 1,
+      "false_negatives": 1,
+      "true_negatives": 94,
+      "precision": 0.8,
+      "recall": 0.8,
+      "f1_score": 0.8,
+      "accuracy": 0.98
+    }
+  },
+  "saved_at": "2026-10-30T19:56:16.881462",
+  "model_filename": "isolation_forest_v1.0.0.joblib"
+}

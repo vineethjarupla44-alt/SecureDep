@@ -1,0 +1,41 @@
+# Python Bytecode and Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Uploaded Financial Documents & User Files
+uploads/*
+!uploads/.gitkeep
+!uploads/documents/.gitkeep
+
+# Logs and Temporary Files
+*.log
+logs/
+temp/
+tmp/
+*.tmp
+
+# IDE & OS Artifacts
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
